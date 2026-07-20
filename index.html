@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frailty Flow First — Frontdoor Simulator</title>
+    <style>
+        :root {
+            --primary: #0284c7;
+            --primary-dark: #0369a1;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #0f172a;
+            --border: #e2e8f0;
+            --success: #16a34a;
+            --warning: #ca8a04;
+            --danger: #dc2626;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: #0f172a;
+            color: white;
+            padding: 20px 24px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            margin: 0 0 6px 0;
+            font-size: 1.5rem;
+        }
+
+        header p {
+            margin: 0;
+            color: #38bdf8;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 850px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.1rem;
+            color: var(--primary-dark);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 8px;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+            color: #475569;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            background-color: #f8fafc;
+            box-sizing: border-box;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background-color: #fff;
+        }
+
+        button {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 8px;
+        }
+
+        button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        /* Result Panel Styling */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .badge-success { background: #dcfce7; color: #15803d; }
+        .badge-warning { background: #fef9c3; color: #a16207; }
+        .badge-danger { background: #fee2e2; color: #b91c1c; }
+
+        .timeline {
+            border-left: 2px solid var(--border);
+            padding-left: 16px;
+            margin-top: 16px;
+        }
+
+        .timeline-step {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .timeline-step::before {
+            content: '';
+            position: absolute;
+            left: -21px;
+            top: 4px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+        }
+
+        .timeline-step h4 {
+            margin: 0 0 2px 0;
+            font-size: 0.9rem;
+        }
+
+        .timeline-step p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .comparison-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 16px;
+            padding: 12px;
+            background: #f1f5f9;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .comparison-col h5 {
+            margin: 0 0 4px 0;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: #475569;
+        }
+
+        .comparison-col p {
+            margin: 0;
+            font-weight: bold;
+        }
+
+        .text-green { color: var(--success); }
+        .text-red { color: var(--danger); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Frailty Flow First — Frontdoor Simulator</h1>
+        <p>Borders General Hospital ED Triage & Community Capacity Decision Support</p>
+    </header>
+
+    <div class="grid">
+        <!-- INPUT PANEL -->
+        <div class="card">
+            <h2>1. Hour 1 Frontdoor Screening</h2>
+            <form id="simulatorForm">
+                <div class="form-group">
+                    <label for="cfs">Clinical Frailty Scale (CFS):</label>
+                    <select id="cfs">
+                        <option value="1">1–3: Managing Well / Fit</option>
+                        <option value="4">4: Vulnerable</option>
+                        <option value="5" selected>5: Mildly Frail</option>
+                        <option value="6">6: Moderately Frail</option>
+                        <option value="7">7: Severely Frail</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="delirium">Delirium / Acute Cognitive Change Flag:</label>
+                    <select id="delirium">
+                        <option value="no">No — Baseline Cognition</option>
+                        <option value="yes">Yes — Screened Positive (4AT)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="postcode">Patient Locality (Postcode Sector):</label>
+                    <select id="postcode">
+                        <option value="TD1">TD1 (Galashiels / Central)</option>
+                        <option value="TD9">TD9 (Hawick Patch — Social Care Freeze)</option>
+                        <option value="TD5">TD5 (Kelso / Eastern Borders)</option>
+                        <option value="TD7">TD7 (Selkirk)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="existingCare">Current Community Support Footprint:</label>
+                    <select id="existingCare">
+                        <option value="none">No existing care package</option>
+                        <option value="active">Active Care Package (Needs Restart/Increase)</option>
+                        <option value="family">Family / Informal Carers Only</option>
+                    </select>
+                </div>
+
+                <button type="button" onclick="runSimulation()">Evaluate Pathway Decision</button>
+            </form>
+        </div>
+
+        <!-- OUTPUT PANEL -->
+        <div class="card">
+            <h2>2. Automated MDT Routing & Impact</h2>
+            <div id="outputArea">
+                <p style="color: #64748b; font-style: italic;">Adjust the parameters on the left and click "Evaluate Pathway Decision" to run the model.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function runSimulation() {
+        const cfs = parseInt(document.getElementById('cfs').value);
+        const delirium = document.getElementById('delirium').value;
+        const postcode = document.getElementById('postcode').value;
+        const care = document.getElementById('existingCare').value;
+
+        const output = document.getElementById('outputArea');
+
+        // Logic Engine
+        let pathway = "";
+        let badgeClass = "";
+        let statusTitle = "";
+        let actions = [];
+        let tradLoS = 5.8;
+        let fffLoS = 4.4;
+        let riskMitigation = "";
+
+        // Decision Tree
+        if (cfs <= 3) {
+            statusTitle = "Standard ED Pathway";
+            badgeClass = "badge-success";
+            pathway = "Direct discharge or standard medical triage.";
+            actions = [
+                "Does not meet primary frailty triage criteria.",
+                "Proceed with routine emergency medical management."
+            ];
+            tradLoS = 1.0;
+            fffLoS = 1.0;
+        } else if (postcode === "TD9" && (care === "active" || care === "none")) {
+            statusTitle = "High Delay Risk — Early Social Work Trigger Required";
+            badgeClass = "badge-danger";
+            pathway = "Hospital at Home (H@H) / Immediate Frontdoor Diversion";
+            actions = [
+                "<strong>Mosaic Check Alert:</strong> TD9 Hawick locality currently experiencing severe package-of-care backlogs.",
+                "<strong>Hour 1 Action:</strong> Trigger immediate assessment referral to Hospital at Home team to prevent acute admission boarding.",
+                "<strong>MDT Notification:</strong> Alert social work within <2 hours of arrival to begin alternative community wrap-around support."
+            ];
+            tradLoS = 7.2; // Significant delay under traditional pathway
+            fffLoS = 3.5;  // Bypassed via early frontdoor identification
+            riskMitigation = "Prevents 3.7 days of avoidable non-medical acute bed lockup.";
+        } else if (cfs >= 5 && delirium === "no") {
+            statusTitle = "Frailty Pathway Activated — Frontdoor Diversion Candidate";
+            badgeClass = "badge-warning";
+            pathway = "Hospital at Home / Same-Day Frailty MDT Clearance";
+            actions = [
+                "Clinical screening flags CFS " + cfs + " with no acute delirium barrier.",
+                "Postcode " + postcode + " shows stable local care provider capacity.",
+                "<strong>Day 1 Action:</strong> Route to Frailty MDT for rapid assessment and targeted community discharge within 24 hours."
+            ];
+            tradLoS = 5.8;
+            fffLoS = 2.0;
+            riskMitigation = "Avoids hospital-acquired deconditioning caused by unnecessary multi-day stays.";
+        } else {
+            statusTitle = "Acute Frailty Admission + Accelerated Discharge Planning";
+            badgeClass = "badge-warning";
+            pathway = "Short-Stay Acute Admission with Early Discharge Trigger";
+            actions = [
+                "Clinical needs require brief stabilization/observation.",
+                "<strong>Day 1 Action:</strong> Synchronize TrakCare clinical markers with Mosaic social work backlog data today.",
+                "Set Target Date of Discharge (TDD) immediately upon admission."
+            ];
+            tradLoS = 6.5;
+            fffLoS = 4.8;
+            riskMitigation = "Reduces non-clinical delay window by identifying social care requirements on Hour 1.";
+        }
+
+        // Render Results
+        output.innerHTML = `
+            <div class="status-badge ${badgeClass}">${statusTitle}</div>
+            
+            <div style="font-size: 0.95rem; font-weight: bold; margin-bottom: 8px;">
+                Recommended Decision: <span style="color: var(--primary-dark);">${pathway}</span>
+            </div>
+
+            <div class="timeline">
+                ${actions.map(action => `
+                    <div class="timeline-step">
+                        <h4>Workflow Action</h4>
+                        <p>${action}</p>
+                    </div>
+                `).join('')}
+            </div>
+
+            <div class="comparison-box">
+                <div class="comparison-col">
+                    <h5>Traditional Workflow</h5>
+                    <p class="text-red">${tradLoS} Bed-Days</p>
+                    <span style="font-size: 0.75rem; color: #64748b;">(Social bottlenecks identified on Day 3/4)</span>
+                </div>
+                <div class="comparison-col">
+                    <h5>Frailty Flow First</h5>
+                    <p class="text-green">${fffLoS} Bed-Days</p>
+                    <span style="font-size: 0.75rem; color: #64748b;">(Constraints linked on Hour 1)</span>
+                </div>
+            </div>
+
+            ${riskMitigation ? `<p style="font-size: 0.85rem; color: var(--success); font-weight: 600; margin-top: 12px;">✓ ${riskMitigation}</p>` : ''}
+        `;
+    }
+</script>
+
+</body>
+</html>
